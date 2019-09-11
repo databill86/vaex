@@ -71,7 +71,7 @@ class ColumnIndexed(Column):
         self.df = df
         self.indices = indices
         self.name = name
-        self.dtype = self.df.dtype(name)
+        self.dtype = self.df.dtype_evaluate(name)
         self.shape = (len(indices),)
         max_index = self.indices.max()
         if not np.ma.is_masked(max_index):
