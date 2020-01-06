@@ -155,7 +155,7 @@ class Executor(object):
                 self.signal_begin.emit()
                 for df in dfs:
                     self.passes += 1
-                    task_queue = [task for task in task_queue_all if task.df == df]
+                    task_queue = [task for task in task_queue_all if task.df is df]
                     pre_filter = task_queue[0].pre_filter
                     if any(pre_filter != task.pre_filter for task in task_queue[1:]):
                         raise ValueError("All tasks need to be pre_filter'ed or not pre_filter'ed, it cannot be mixed")
