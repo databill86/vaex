@@ -149,23 +149,25 @@ class DataFrameAccessorML(object):
         return booster
 
 
-    def catboost_model(self, target, num_boost_round, features=None, params=None, prediction_name='catboost_prediction'):
+    def catboost_model(self, target, features=None, num_boost_round=100, params=None, prediction_name='catboost_prediction'):
         '''Requires vaex.ml: create a CatBoostModel model and train/fit it.
 
-        :param target: Target to train/fit on
-        :param num_boost_round: Number of rounds
-        :param features: List of features to train on
-        :return vaex.ml.catboost.CatBoostModel: Fitted CatBoostModel model
+        :param target: The name of the target column.
+        :param features: List of features to use when training the model. If None, all columns except the target will be used as features.
+        :param num_boost_round: Number of boosting rounds.
+        :return vaex.ml.catboost.CatBoostModel: Fitted CatBoostModel model.
         '''
         from .catboost import CatBoostModel
         dataframe = self.df
-        features = features or self.df.get_column_names()
+        target = _ensure_strings_from_expressions(target)
+        features = features or self.df.get_column_names(virtual=True).remove(target)
         features = _ensure_strings_from_expressions(features)
         booster = CatBoostModel(prediction_name=prediction_name,
                                 num_boost_round=num_boost_round,
                                 features=features,
+                                target=target,
                                 params=params)
-        booster.fit(dataframe, target)
+        booster.fit(dataframe)
         return booster
 
 
