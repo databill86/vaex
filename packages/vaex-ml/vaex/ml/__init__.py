@@ -113,7 +113,8 @@ class DataFrameAccessorML(object):
         '''
         from .xgboost import XGBoostModel
         df = self.df
-        features = features or self.df.get_column_names().remove(targ)
+        target = _ensure_strings_from_expressions(target)
+        features = features or self.df.get_column_names(virtual=True).remove(target)
         features = _ensure_strings_from_expressions(features)
         booster = XGBoostModel(prediction_name=prediction_name,
                                num_boost_round=num_boost_round,
@@ -124,26 +125,27 @@ class DataFrameAccessorML(object):
         return booster
 
 
-    def lightgbm_model(self, target, num_boost_round, features=None, copy=False, params={},
-                    prediction_name='lightgbm_prediction'):
+    def lightgbm_model(self, target, features=None, num_boost_round=100, copy=False, params={}, prediction_name='lightgbm_prediction'):
         '''Requires vaex.ml: create a lightgbm model and train/fit it.
 
-        :param target: The target variable to predict.
-        :param num_boost_round: Number of boosting iterations.
-        :param features: List of features to train on.
-        :param bool copy: Copy data or use the modified xgboost library for efficient transfer.
+        :param target: The name of the target column.
+        :param features: List of features to use when training the model. If None, all columns except the target will be used as features.
+        :param num_boost_round: Number of boosting rounds.
+        :param bool copy: If True Copy the data, otherwise use a more memory efficient data transfer method.
         :return vaex.ml.lightgbm.LightGBMModel: Fitted LightGBM model.
         '''
         from .lightgbm import LightGBMModel
         dataframe = self.df
-        features = features or self.df.get_column_names(virtual=True)
+        target = _ensure_strings_from_expressions(target)
+        features = features or self.df.get_column_names(virtual=True).remove(target)
         features = _ensure_strings_from_expressions(features)
 
         booster = LightGBMModel(prediction_name=prediction_name,
                                 num_boost_round=num_boost_round,
                                 features=features,
+                                target=target,
                                 params=params)
-        booster.fit(dataframe, target, copy=copy)
+        booster.fit(dataframe, copy=copy)
         return booster
 
 
