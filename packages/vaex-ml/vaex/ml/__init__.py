@@ -103,23 +103,24 @@ class DataFrameAccessorML(object):
         return minmax_scaler
 
 
-    def xgboost_model(self, target, num_boost_round, features=None, params={}, prediction_name='xgboost_prediction'):
+    def xgboost_model(self, target, features=None, num_boost_round=100, params={}, prediction_name='xgboost_prediction'):
         '''Requires vaex.ml: create a XGBoost model and train/fit it.
 
-        :param target: Target to train/fit on.
-        :param num_boost_round: Number of rounds.
-        :param features: List of features to train on.
-        :return vaex.ml.xgboost.XGBModel: Fitted XGBoost model.
+        :param target: The name of the target column.
+        :param features: List of features to use when training the model. If None, all columns except the target will be used as features.
+        :param num_boost_round: Number of boosting rounds.
+        :return vaex.ml.xgboost.XGBoostModel: Fitted XGBoost model.
         '''
         from .xgboost import XGBoostModel
-        dataframe = self.df
-        features = features or self.df.get_column_names()
+        df = self.df
+        features = features or self.df.get_column_names().remove(targ)
         features = _ensure_strings_from_expressions(features)
         booster = XGBoostModel(prediction_name=prediction_name,
-                            num_boost_round=num_boost_round,
-                            features=features,
-                            params=params)
-        booster.fit(dataframe, target)
+                               num_boost_round=num_boost_round,
+                               features=features,
+                               target=target,
+                               params=params)
+        booster.fit(df)
         return booster
 
 
