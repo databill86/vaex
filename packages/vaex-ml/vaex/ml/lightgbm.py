@@ -11,6 +11,7 @@ import vaex.serialize
 from . import state
 import traitlets
 from . import generate
+from vaex.utils import _ensure_strings_from_expressions
 
 
 lib = lightgbm.basic._LIB
@@ -105,20 +106,23 @@ class LightGBMModel(state.HasState):
             If *verbose_eval* is True then the evaluation metric on the validation set is printed at each boosting stage.
         :param bool copy: (default, False) If True, make an in memory copy of the data before passing it to LightGBMModel.
         """
+        # Ensure strings
+        target = _ensure_strings_from_expressions(self.target)
+        features = _ensure_strings_from_expressions(self.features)
 
         if copy:
-            dtrain = lightgbm.Dataset(df[self.features].values, df.evaluate(self.target))
+            dtrain = lightgbm.Dataset(df[features].values, df.evaluate(target))
             if valid_sets is not None:
                 for i, item in enumerate(valid_sets):
-                    valid_sets[i] = lightgbm.Dataset(item[self.features].values, item[self.target].values)
+                    valid_sets[i] = lightgbm.Dataset(item[features].values, item[target].values)
             else:
                 valid_sets = ()
         else:
-            dtrain = VaexDataset(df, self.target, features=self.features)
+            dtrain = VaexDataset(df, target, features=features)
             if valid_sets is not None:
                 for i, item in enumerate(valid_sets):
-                    # valid_sets[i] = VaexDataset(item, target, features=self.features)
-                    valid_sets[i] = lightgbm.Dataset(item[self.features].values, item[self.target].values)
+                    # valid_sets[i] = VaexDataset(item, target, features=features)
+                    valid_sets[i] = lightgbm.Dataset(item[features].values, item[target].values)
                     warnings.warn('''Validation sets do not obey the `copy=False` argument.
                                   A standard in-memory copy is made for each validation set.''', UserWarning)
             else:

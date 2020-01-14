@@ -9,6 +9,7 @@ import vaex.serialize
 from vaex.ml import generate
 from vaex.ml import state
 from vaex.ml.state import serialize_pickle
+from vaex.utils import _ensure_strings_from_expressions
 
 
 @vaex.serialize.register
@@ -91,8 +92,12 @@ class Predictor(state.HasState):
 
         :param df: A vaex DataFrame containing the features and target on which to train the model.
         '''
-        X = df[self.features].values
-        y = df.evaluate(self.target)
+        # Ensure strings
+        target = _ensure_strings_from_expressions(self.target)
+        features = _ensure_strings_from_expressions(self.features)
+
+        X = df[features].values
+        y = df.evaluate(target)
         self.model.fit(X=X, y=y, **kwargs)
 
 
@@ -209,15 +214,20 @@ class IncrementalPredictor(state.HasState):
         :param df: A vaex DataFrame containing the features and target on which to train the model.
         :param progress: If True, display a progressbar which tracks the training progress.
         '''
+
         # Check whether the model is appropriate
         assert hasattr(self.model, 'partial_fit'), 'The model must have a `.partial_fit` method.'
+
+        # Ensure strings
+        target = _ensure_strings_from_expressions(self.target)
+        features = _ensure_strings_from_expressions(self.features)
 
         n_samples = len(df)
 
         progressbar = vaex.utils.progressbars(progress)
 
         # Portions of the DataFrame to evaluate
-        expressions = self.features + [self.target]
+        expressions = features + [target]
 
         for epoch in range(self.num_epochs):
             for i1, i2, chunks in df.evaluate_iterator(expressions, chunk_size=self.batch_size):
