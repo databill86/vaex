@@ -4,7 +4,6 @@ import traitlets
 
 import vaex
 import vaex.serialize
-from vaex.utils import _ensure_strings_from_expressions
 from . import state
 from . import generate
 
@@ -97,17 +96,14 @@ class CatBoostModel(state.HasState):
         :param bool plot: if True, display an interactive widget in the Jupyter
             notebook of how the train and validation sets score on each boosting iteration.
         '''
-        # Ensure strings
-        target = _ensure_strings_from_expressions(self.target)
-        features = _ensure_strings_from_expressions(self.features)
 
-        data = df[features].values
-        target_data = df[target].values
+        data = df[self.features].values
+        target_data = df[self.target].values
         dtrain = catboost.Pool(data=data, label=target_data, **self.pool_params)
         if evals is not None:
             for i, item in enumerate(evals):
-                data = item[features].values
-                target_data = item[target].values
+                data = item[self.features].values
+                target_data = item[self.target].values
                 evals[i] = catboost.Pool(data=data, label=target_data, **self.pool_params)
 
         # This does the actual training/fitting of the catboost model

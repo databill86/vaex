@@ -10,7 +10,6 @@ import vaex
 from . import state
 from . import generate
 import vaex.serialize
-from vaex.utils import _ensure_strings_from_expressions
 
 
 @vaex.serialize.register
@@ -96,18 +95,15 @@ class XGBoostModel(state.HasState):
         :param bool verbose_eval: Requires at least one item in *evals*.
             If *verbose_eval* is True then the evaluation metric on the validation set is printed at each boosting stage.
         '''
-        # Ensure strings
-        target = _ensure_strings_from_expressions(self.target)
-        features = _ensure_strings_from_expressions(self.features)
 
-        data = df[features].values
-        target_data = df.evaluate(target)
+        data = df[self.features].values
+        target_data = df.evaluate(self.target)
         dtrain = xgboost.DMatrix(data, target_data)
         if evals is not None:
             evals = [list(elem) for elem in evals]
             for item in evals:
-                data = item[0][features].values
-                target_data = item[0].evaluate(target)
+                data = item[0][self.features].values
+                target_data = item[0].evaluate(self.target)
                 item[0] = xgboost.DMatrix(data, target_data)
         else:
             evals = ()
